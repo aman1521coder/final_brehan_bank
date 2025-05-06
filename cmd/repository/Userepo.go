@@ -62,3 +62,12 @@ func (repo *Repository) CreateDistrictManager(districtManager data.DistrictManag
 	_, err = repo.DB.Exec(query, districtManager.User.Id, districtManager.District)
 	return err
 }
+func (repo *Repository) GetUserById(id string) (data.User, error) {
+	var user data.User
+	query := `SELECT * FROM users WHERE id = $1`
+	err := repo.DB.QueryRow(query, id).Scan(&user.Id, &user.Name, &user.Password, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		return user, err
+	}
+	return user, nil
+}

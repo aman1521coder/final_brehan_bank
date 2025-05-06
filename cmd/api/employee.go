@@ -5,7 +5,8 @@ import(
 
 
 )
-func (app *Application)employee(c *gin.Context){
-	
+func (app *Application)createemployee(c *gin.Context){
+
+
 	
 }
