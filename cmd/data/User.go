@@ -1,24 +1,28 @@
-package data 
-import(
-	"time"
-)
-type User struct{
-	Id string 
-	Name string 
-	Password string 
+package data
 
-	createdAt time.Time
-	updatedAt time.Time
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type User struct {
+	Id        uuid.UUID
+	Name      string
+	Password  string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
-type Admin struct{
-	user User
- 
+
+type Admin struct {
+	User User
 }
-type Manager struct{
-	user User
- 
+
+type Manager struct {
+	User User
 }
-type DistrictManager struct{
-	user User
-    Distrct string 
+
+type DistrictManager struct {
+	User     User
+	District string
 }

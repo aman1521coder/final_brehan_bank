@@ -1,3 +1,4 @@
+
 package data 
 type InternalEmployee struct {
     FirstName    string `json:"first_name"`
