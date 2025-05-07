@@ -1,15 +1,15 @@
 package main
 
 import (
-    "database/sql"
-    "flag"
-    "fmt"
-    "log"
-    "os"
+	"database/sql"
+	"flag"
+	"fmt"
+	"log"
+	"os"
 
- 
-    _ "github.com/lib/pq"
-    "github.com/brehan/bank/cmd/repository"
+	"github.com/brehan/bank/cmd/repository"
+	"github.com/brehan/bank/cmd/service"
+	_ "github.com/lib/pq"
 )
 
 type config struct {
@@ -22,6 +22,8 @@ type Application struct {
     config config
     log    *log.Logger
     db     *sql.DB
+    EmployeeService service.EmployeeService
+    
     repo   *repository.Repository
 }
 

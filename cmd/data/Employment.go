@@ -3,7 +3,7 @@ import (
 	"time"
 )
 type Employee struct {
-	ID               string    `json:"id"`                 // ID No.
+	ID               int   `json:"id"`                 // ID No.
 	FileNumber       string    `json:"file_number"`        // File No.
 	FullName         string    `json:"full_name"`          // Name Of Employee
 	
