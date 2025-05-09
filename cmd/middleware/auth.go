@@ -1,111 +1,120 @@
 package middleware
 
 import (
-	"context"
-	"errors"
-	"net/http"
-	"strings"
-	"time"
+    "errors"
+    "net/http"
+    "strings"
+    "time"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/google/uuid"
+    "github.com/dgrijalva/jwt-go"
+    "github.com/gin-gonic/gin"
+    "github.com/google/uuid"
 )
 
 var (
-	ErrInvalidToken = errors.New("invalid token")
-	ErrNoToken      = errors.New("no token provided")
-	ErrInvalidRole  = errors.New("invalid role")
+    ErrInvalidToken = errors.New("invalid token")
+    ErrNoToken      = errors.New("no token provided")
+    ErrInvalidRole  = errors.New("invalid role")
 )
 
 type Claims struct {
-	UserID uuid.UUID `json:"user_id"`
-	Role   string    `json:"role"`
-	jwt.StandardClaims
+    UserID   uuid.UUID `json:"user_id"`
+    Role     string    `json:"role"`
+    District string    `json:"district,omitempty"`
+    jwt.StandardClaims
 }
-
-type contextKey string
 
 const (
-	UserIDKey contextKey = "user_id"
-	RoleKey   contextKey = "role"
+    UserIDKey = "user_id"
+    RoleKey   = "role"
 )
 
-var jwtKey = []byte("your-secret-key") // In production, use environment variable
+var jwtKey = []byte("your-secret-key") // Replace with env variable in production
 
-func GenerateToken(userID uuid.UUID, role string) (string, error) {
-	expirationTime := time.Now().Add(24 * time.Hour)
-	claims := &Claims{
-		UserID: userID,
-		Role:   role,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
-		},
-	}
+func GenerateToken(userID uuid.UUID, role string, district string) (string, error) {
+    expirationTime := time.Now().Add(24 * time.Hour)
+    claims := &Claims{
+        UserID:   userID,
+        Role:     role,
+        District: district,
+        StandardClaims: jwt.StandardClaims{
+            ExpiresAt: expirationTime.Unix(),
+        },
+    }
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtKey)
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    return token.SignedString(jwtKey)
 }
 
-func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, ErrNoToken.Error(), http.StatusUnauthorized)
-			return
-		}
+func AuthMiddleware(c *gin.Context) {
+    authHeader := c.GetHeader("Authorization")
+    if authHeader == "" {
+        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": ErrNoToken.Error()})
+        return
+    }
 
-		tokenString := strings.Replace(authHeader, "Bearer ", "", 1)
-		claims := &Claims{}
+    tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+    claims := &Claims{}
 
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
-		})
+    token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+        return jwtKey, nil
+    })
 
-		if err != nil || !token.Valid {
-			http.Error(w, ErrInvalidToken.Error(), http.StatusUnauthorized)
-			return
-		}
+    if err != nil || !token.Valid {
+        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": ErrInvalidToken.Error()})
+        return
+    }
 
-		ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
-		ctx = context.WithValue(ctx, RoleKey, claims.Role)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+    c.Set(UserIDKey, claims.UserID)
+    c.Set(RoleKey, claims.Role)
+    c.Next()
 }
 
-func RequireRole(roles ...string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			role := r.Context().Value(RoleKey).(string)
-			authorized := false
-			for _, allowedRole := range roles {
-				if role == allowedRole {
-					authorized = true
-					break
-				}
-			}
+func RequireRole(roles ...string) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        roleValue, exists := c.Get(RoleKey)
+        if !exists {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": ErrInvalidToken.Error()})
+            return
+        }
 
-			if !authorized {
-				http.Error(w, ErrInvalidRole.Error(), http.StatusForbidden)
-				return
-			}
+        role, ok := roleValue.(string)
+        if !ok {
+            c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "invalid role type"})
+            return
+        }
 
-			next.ServeHTTP(w, r)
-		})
-	}
+        for _, allowed := range roles {
+            if role == allowed {
+                c.Next()
+                return
+            }
+        }
+
+        c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": ErrInvalidRole.Error()})
+    }
 }
 
-func GetUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
-	userID, ok := ctx.Value(UserIDKey).(uuid.UUID)
-	if !ok {
-		return uuid.Nil, ErrInvalidToken
-	}
-	return userID, nil
+func GetUserIDFromContext(c *gin.Context) (uuid.UUID, error) {
+    id, exists := c.Get(UserIDKey)
+    if !exists {
+        return uuid.Nil, ErrInvalidToken
+    }
+    userID, ok := id.(uuid.UUID)
+    if !ok {
+        return uuid.Nil, ErrInvalidToken
+    }
+    return userID, nil
 }
 
-func GetRoleFromContext(ctx context.Context) (string, error) {
-	role, ok := ctx.Value(RoleKey).(string)
-	if !ok {
-		return "", ErrInvalidToken
-	}
-	return role, nil
-} 
+func GetRoleFromContext(c *gin.Context) (string, error) {
+    role, exists := c.Get(RoleKey)
+    if !exists {
+        return "", ErrInvalidToken
+    }
+    roleStr, ok := role.(string)
+    if !ok {
+        return "", ErrInvalidToken
+    }
+    return roleStr, nil
+}

@@ -1,13 +1,13 @@
 package main
 import(
-	"github.com/gin-gonic/gin"
-	"github.com/brehan/bank/cmd/service"
-    "github.com/brehan/bank/cmd/data"
+	//"github.com/gin-gonic/gin"
+	//"github.com/brehan/bank/cmd/service"
+    //"github.com/brehan/bank/cmd/data"
 
 )
 
 
-func (app *Application)editmployee(c *gin.Context){
+/* func (app *Application)editmployee(c *gin.Context){
 var emp data.Employee
 
 if app.EmployeeService.CreateEmployee(emp)==nil{
@@ -22,3 +22,4 @@ if err!=nil{{
 
 	
 }}
+ */

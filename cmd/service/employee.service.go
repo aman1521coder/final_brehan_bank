@@ -2,7 +2,7 @@ package service
 
 import (
     "errors"
-    "time"
+
 
     "github.com/brehan/bank/cmd/data"
     "github.com/brehan/bank/cmd/repository"
@@ -27,7 +27,7 @@ func NewEmployeeService(repo *repository.Repository) *DefaultEmployeeService {
 }
 
 // ValidateEmployee validates the fields of an Employee struct
-func (empser *DefaultEmployeeService) ValidateEmployee(emp *data.Employee) error {
+func (empser *DefaultEmployeeService) ValidateEmployee(emp data.Employee) error {
     if  emp.ID <= 0 {
         return errors.New("id is required and must be positive")
     }

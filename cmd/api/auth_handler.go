@@ -1,121 +1,127 @@
-package api
+package main
 
 import (
-	"encoding/json"
-	"net/http"
+    "net/http"
 
-	"github.com/brehan/bank/cmd/middleware"
-	"github.com/brehan/bank/cmd/service"
+    "github.com/brehan/bank/cmd/middleware"
+    "github.com/brehan/bank/cmd/service"
+    "github.com/gin-gonic/gin"
+    //"github.com/google/uuid"
 )
 
 type AuthHandler struct {
-	authService *service.AuthService
+    authService *service.AuthService
 }
 
 func NewAuthHandler(authService *service.AuthService) *AuthHandler {
-	return &AuthHandler{authService: authService}
+    return &AuthHandler{authService: authService}
 }
 
 type loginRequest struct {
-	Name     string `json:"name"`
-	Password string `json:"password"`
+    Name     string `json:"name" binding:"required"`
+    Password string `json:"password" binding:"required"`
 }
 
 type registerRequest struct {
-	Name     string `json:"name"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
+    Name     string `json:"name" binding:"required"`
+    Password string `json:"password" binding:"required"`
+    Role     string `json:"role" binding:"required"`
+    District string `json:"district" binding:"required_if=Role district_manager"`
 }
 
 type authResponse struct {
-	Token string `json:"token"`
-	User  struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-		Role string `json:"role"`
-	} `json:"user"`
+    Token string `json:"token"`
+    User  struct {
+        ID       string `json:"id"`
+        Name     string `json:"name"`
+        Role     string `json:"role"`
+        District string `json:"district,omitempty"`
+    } `json:"user"`
 }
 
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req loginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
+func (h *AuthHandler) Login(c *gin.Context) {
+    var req loginRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+        return
+    }
 
-	user, err := h.authService.Login(req.Name, req.Password)
-	if err != nil {
-		if err == service.ErrInvalidCredentials {
-			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+    user, role, district, err := h.authService.Login(req.Name, req.Password)
+    if err != nil {
+        if err == service.ErrInvalidCredentials {
+            c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+            return
+        }
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+        return
+    }
 
-	token, err := middleware.GenerateToken(user.ID, user.Role)
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+    token, err := middleware.GenerateToken(user.Id, role, district)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+        return
+    }
 
-	response := authResponse{
-		Token: token,
-		User: struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-			Role string `json:"role"`
-		}{
-			ID:   user.ID.String(),
-			Name: user.Name,
-			Role: user.Role,
-		},
-	}
+    response := authResponse{
+        Token: token,
+        User: struct {
+            ID       string `json:"id"`
+            Name     string `json:"name"`
+            Role     string `json:"role"`
+            District string `json:"district,omitempty"`
+        }{
+            ID:       user.Id.String(),
+            Name:     user.Name,
+            Role:     role,
+            District: district,
+        },
+    }
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+    c.JSON(http.StatusOK, response)
 }
 
-func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req registerRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
+func (h *AuthHandler) Register(c *gin.Context) {
+    var req registerRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+        return
+    }
 
-	user, err := h.authService.Register(req.Name, req.Password, req.Role)
-	if err != nil {
-		switch err {
-		case service.ErrUserExists:
-			http.Error(w, "User already exists", http.StatusConflict)
-		case service.ErrInvalidRole:
-			http.Error(w, "Invalid role", http.StatusBadRequest)
-		default:
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-		}
-		return
-	}
+    user, role, district, err := h.authService.Register(req.Name, req.Password, req.Role, req.District)
+    if err != nil {
+        switch err {
+        case service.ErrUserExists:
+            c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
+        case service.ErrInvalidRole:
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role"})
+        case service.ErrInvalidDistrict:
+            c.JSON(http.StatusBadRequest, gin.H{"error": "District required for district_manager"})
+        default:
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+        }
+        return
+    }
 
-	token, err := middleware.GenerateToken(user.ID, user.Role)
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+    token, err := middleware.GenerateToken(user.Id, role, district)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+        return
+    }
 
-	response := authResponse{
-		Token: token,
-		User: struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-			Role string `json:"role"`
-		}{
-			ID:   user.ID.String(),
-			Name: user.Name,
-			Role: user.Role,
-		},
-	}
+    response := authResponse{
+        Token: token,
+        User: struct {
+            ID       string `json:"id"`
+            Name     string `json:"name"`
+            Role     string `json:"role"`
+            District string `json:"district,omitempty"`
+        }{
+            ID:       user.Id.String(),
+            Name:     user.Name,
+            Role:     role,
+            District: district,
+        },
+    }
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
-} 
+    c.JSON(http.StatusCreated, response)
+}
