@@ -64,7 +64,8 @@ CREATE TABLE InternalEmployee (
     last_name TEXT,
     jobid UUID REFERENCES Job(id),
     other_bank_exp TEXT,
-    employee_id INT REFERENCES Employee(id) ON DELETE CASCADE
+    employee_id INT REFERENCES Employee(id) ON DELETE CASCADE,
+    resume_path TEXT
 );
 
 CREATE TABLE ExternalEmployee (
@@ -75,7 +76,8 @@ CREATE TABLE ExternalEmployee (
     phone TEXT,
     jobid UUID REFERENCES Job(id),
     other_job_exp TEXT,
-    other_job_exp_year INT
+    other_job_exp_year INT,
+    resume_path TEXT
 );
 
 CREATE TABLE Users (

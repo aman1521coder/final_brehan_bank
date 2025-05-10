@@ -40,6 +40,7 @@ type authResponse struct {
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
+
     var req loginRequest
     if err := c.ShouldBindJSON(&req); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})

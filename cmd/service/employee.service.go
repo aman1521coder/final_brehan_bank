@@ -8,7 +8,6 @@ import (
     "github.com/brehan/bank/cmd/repository"
 )
 
-// EmployeeService defines the interface for employee-related operations
 type EmployeeService interface {
     ValidateEmployee(emp data.Employee) error
     CreateEmployee(emp data.Employee) error
@@ -16,7 +15,6 @@ type EmployeeService interface {
     GetEmployeeByFileNumber(fileNumber string) (data.Employee, error)
 }
 
-// DefaultEmployeeService implements the EmployeeService interface
 type DefaultEmployeeService struct {
     repo *repository.Repository // Add repository instance
 }
@@ -26,7 +24,7 @@ func NewEmployeeService(repo *repository.Repository) *DefaultEmployeeService {
     return &DefaultEmployeeService{repo: repo}
 }
 
-// ValidateEmployee validates the fields of an Employee struct
+
 func (empser *DefaultEmployeeService) ValidateEmployee(emp data.Employee) error {
     if  emp.ID <= 0 {
         return errors.New("id is required and must be positive")
@@ -53,7 +51,7 @@ func (empser *DefaultEmployeeService) CreateEmployee(emp data.Employee) error {
     if err := empser.ValidateEmployee(emp); err != nil {
         return err
     }
-    return empser.repo.CreateEmployee(emp) // Call on repo instance
+    return empser.repo.CreateEmployee(emp) 
 }
 
 

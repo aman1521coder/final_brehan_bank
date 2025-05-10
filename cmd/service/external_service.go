@@ -1,32 +1,30 @@
 package service
+
 import(
 	"github.com/brehan/bank/cmd/repository"
 	"github.com/brehan/bank/cmd/data"
 	"fmt"
 	"errors"
-
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"net/http"
 )
-
-type InternalEmployeeService struct {
+type ExternalService struct {
 	repo repository.Repository
-
 }
-func NewInternalEmployeeService(repo repository.Repository) *InternalEmployeeService {
-	return &InternalEmployeeService{
+func NewExternalService(repo repository.Repository) *ExternalService {
+	return &ExternalService{
 		repo: repo,
 	}
 }
-/* func (s *InternalEmployeeService) GetEmployeeById(id int) (data.InternalEmployee, error) {
+/* func (s *ExternalService) GetEmployeeById(id int) (data.ExternalEmployee, error) {
 	
 	
 }
  */
- func (s *InternalEmployeeService) Save_Internal_Employee(emo data.InternalEmployee) error {
+ func (s *ExternalService) Save_External_Employee(emo data.ExternalEmployee) error {
 	// First save the resume file if a path is provided
 	if emo.Resumepath != "" {
 		originalPath := emo.Resumepath
@@ -48,7 +46,7 @@ func NewInternalEmployeeService(repo repository.Repository) *InternalEmployeeSer
 	}
 	
 	// Save the employee record to the repository
-	err := s.repo.ApplyInternal(emo)
+	err := s.repo.ApplyExternal(emo)
 	if err != nil {
 		return fmt.Errorf("failed to save employee record: %w", err)
 	}
@@ -57,7 +55,7 @@ func NewInternalEmployeeService(repo repository.Repository) *InternalEmployeeSer
 }
 
 
-func (s *InternalEmployeeService) SaveResume(emp data.InternalEmployee, originalFilePath string) error {
+func (s *ExternalService) SaveResume(emp data.ExternalEmployee, originalFilePath string) error {
 	if originalFilePath == "" {
 		return errors.New("file path is empty")
 	}
@@ -99,7 +97,7 @@ func (s *InternalEmployeeService) SaveResume(emp data.InternalEmployee, original
 		return fmt.Errorf("failed to reset file pointer: %w", err)
 	}
 	
-	// Check content type
+	
 	contentType := http.DetectContentType(buffer)
 	if !strings.Contains(contentType, "application/pdf") && !strings.Contains(contentType, "application/octet-stream") {
 		return fmt.Errorf("invalid file content type: %s, only PDF files are allowed", contentType)
@@ -122,4 +120,3 @@ func (s *InternalEmployeeService) SaveResume(emp data.InternalEmployee, original
 	
 	return nil
 }
-
