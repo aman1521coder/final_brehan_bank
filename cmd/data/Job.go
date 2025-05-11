@@ -10,6 +10,7 @@ type Job struct {
     CreatedAt time.Time `json:"created_at"`
     UpdatedAt time.Time `json:"updated_at"`
 	JobProgress string `json:"job_progress"`
-	Rmeark string `json:"rmeark"`
+	Rmark string `json:"rmark"`
 	Closetime time.Time	`json:"closetime"`
 }
+

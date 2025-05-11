@@ -25,10 +25,10 @@ type Employee struct {
 	EducationalLevel string    `json:"educational_level"`  // Educational Level
 	Cluster          string    `json:"cluster"`            // Cluster
 	Indpms25        float64   `json:"indpms25"`          // Ind PMS 25%
-	Totalexp20    float64   `json:"totalexp20"`        // Total Exp 20%
+	Totalexp20    float64   `json:"totalexp20"`        // Total Exp 20% 
 	Totalexp     int       `json:"totalexp"`          // Total Exp
 	Relatedexp int       `json:"relatedexp"`         // Related Exp 
-	Expafterpromo float64   `json:"expafterpromo"`     // Exp After Promo
+	Expafterpromo float64   `json:"expafterpromo"`     // Exp After Promo  for largest 
 	Tmdrec20 float64   `json:"tmdrec20"`            // TMD Rec 20%
 	Disrect15 float64   `json:"disrec20"`            // DIS Rec 15%
 	Total float32   `json:"total"`                // Total sum of pms25%  and related exp and lastdateofpm
