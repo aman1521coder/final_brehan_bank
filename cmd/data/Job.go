@@ -1,16 +1,27 @@
-package data 
+package data
+
 import (
-    "time"
+	"time"
 )
+
 type Job struct {
-    Id        string    `json:"id"`
-    JobName   string    `json:"job_name"`
-    JobDesc   string    `json:"job_desc"`
-    JobType   string    `json:"job_type"`
-    CreatedAt time.Time `json:"created_at"`
-    UpdatedAt time.Time `json:"updated_at"`
-	JobProgress string `json:"job_progress"`
-	Rmark string `json:"rmark"`
-	Closetime time.Time	`json:"closetime"`
+	ID          int       `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Requirements string   `json:"requirements"`
+	Department  string    `json:"department"`
+	Location    string    `json:"location"`
+	JobType     string    `json:"job_type"` // internal, external, or both
+	Salary      string    `json:"salary"`
+	PostedDate  time.Time `json:"posted_date"`
+	Deadline    time.Time `json:"deadline"`
+	Status      string    `json:"status"` // open, closed, filled
+}
+
+// Extended InternalEmployee for response matching
+type MatchedInternalEmployee struct {
+	InternalEmployee
+	MatchedEmployee string `json:"matched_employee,omitempty"`
+	PromotionStatus string `json:"promotion_status,omitempty"`
 }
 

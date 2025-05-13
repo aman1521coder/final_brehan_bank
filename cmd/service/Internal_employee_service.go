@@ -123,3 +123,56 @@ func (s *InternalEmployeeService) SaveResume(emp data.InternalEmployee, original
 	return nil
 }
 
+func (s *InternalEmployeeService) GetAllInternalApplications() ([]data.InternalEmployee, error) {
+	return s.repo.GetAllInternalApplications()
+}
+
+func (s *InternalEmployeeService) GetApplicationsByJobID(jobID string) ([]data.InternalEmployee, error) {
+	allApps, err := s.GetAllInternalApplications()
+	if err != nil {
+		return nil, err
+	}
+	
+	var jobApps []data.InternalEmployee
+	for _, app := range allApps {
+		if app.Jobid == jobID {
+			jobApps = append(jobApps, app)
+		}
+	}
+	
+	return jobApps, nil
+}
+
+// MatchWithExistingEmployee checks if an internal application matches an existing employee
+// This can be used for automatic promotion consideration
+func (s *InternalEmployeeService) MatchWithExistingEmployee(internalApp data.InternalEmployee) (data.Employee, error) {
+	// Try to find a matching employee by name
+	// In a real system, you'd use a more reliable identifier
+	employees, err := s.repo.GetAllEmployees()
+	if err != nil {
+		return data.Employee{}, err
+	}
+	
+	fullName := internalApp.FirstName + " " + internalApp.LastName
+	
+	for _, emp := range employees {
+		if emp.FullName == fullName {
+			// Found a match
+			return emp, nil
+		}
+	}
+	
+	return data.Employee{}, errors.New("no matching employee found")
+}
+
+// InitiatePromotion marks an employee for promotion consideration
+func (s *InternalEmployeeService) InitiatePromotion(employee data.Employee, jobID string) error {
+	// In a real implementation, this would:
+	// 1. Update the employee's status to indicate they're being considered for promotion
+	// 2. Create a promotion record or workflow
+	// 3. Notify relevant managers
+	
+	// For now, we'll just return a placeholder
+	return nil
+}
+

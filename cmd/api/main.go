@@ -22,13 +22,16 @@ type config struct {
 }
 
 type Application struct {
-    config          config
-    log             *log.Logger
-    repo            *repository.Repository
-    authRepo        *repository.AuthRepository
-    authService     *service.AuthService
-    authHandler     *AuthHandler
-    employeeService service.EmployeeService
+    config                 config
+    log                    *log.Logger
+    repo                   *repository.Repository
+    authRepo               *repository.AuthRepository
+    authService            *service.AuthService
+    authHandler            *AuthHandler
+    employeeService        service.EmployeeService
+    internalEmployeeService *service.InternalEmployeeService
+    externalEmployeeService *service.ExternalEmployeeService
+    jobService             *service.JobService
 }
 
 func main() {
@@ -62,19 +65,26 @@ func main() {
 
     // Initialize services
     authService := service.NewAuthService(authRepo)
+    employeeService := service.NewEmployeeService(repo)
+    internalEmployeeService := service.NewInternalEmployeeService(*repo)
+    externalEmployeeService := service.NewExternalEmployeeService(*repo)
+    jobService := service.NewJobService(repo)
 
     // Initialize handlers
     authHandler := NewAuthHandler(authService)
 
     // Initialize application
     app := &Application{
-        config:      cfg,
-        log:         logger,
-        repo:        repo,
-        authRepo:    authRepo,
-        authService: authService,
-        authHandler: authHandler,
-        // employeeService remains zero value (uninitialized) as per your code
+        config:                 cfg,
+        log:                    logger,
+        repo:                   repo,
+        authRepo:               authRepo,
+        authService:            authService,
+        authHandler:            authHandler,
+        employeeService:        employeeService,
+        internalEmployeeService: internalEmployeeService,
+        externalEmployeeService: externalEmployeeService,
+        jobService:             jobService,
     }
 
     // Start server
