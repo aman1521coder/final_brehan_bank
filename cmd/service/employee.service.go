@@ -1,6 +1,7 @@
 package service
 
 import (
+	"database/sql"
 	"errors"
 	"time"
 
@@ -64,8 +65,14 @@ func (empser *DefaultEmployeeService) CreateEmployee(emp data.Employee) error {
     currentYear := time.Now().Year()
 
     // Compute raw experience values
-    emp.Totalexp = currentYear - emp.EmploymentDate.Year()
-    emp.Relatedexp = currentYear - emp.LastDoP.Year()
+    totalExp := currentYear - emp.EmploymentDate.Year()
+    var relatedExp int
+    if emp.LastDoP != nil {
+        relatedExp = currentYear - emp.LastDoP.Year()
+    }
+    
+    emp.Totalexp = sql.NullInt64{Int64: int64(totalExp), Valid: true}
+    emp.Relatedexp = sql.NullInt64{Int64: int64(relatedExp), Valid: true}
 
     // Fetch max values from database
     maxTotalExp, maxRelatedExp, _, err := empser.repo.GetmaxValuesofexp(emp)
@@ -73,32 +80,57 @@ func (empser *DefaultEmployeeService) CreateEmployee(emp data.Employee) error {
         return err
     }
 
-
     if maxTotalExp > 0 {
-        emp.Totalexp20 = (float64(emp.Totalexp) / float64(maxTotalExp)) * 20.0
+        totalExpValue := float64(emp.Totalexp.Int64) / float64(maxTotalExp) * 20.0
+        emp.Totalexp20 = sql.NullFloat64{Float64: totalExpValue, Valid: true}
     }
 
-   
     if maxRelatedExp > 0 {
-        emp.Expafterpromo = (float64(emp.Relatedexp) / float64(maxRelatedExp)) * 10.0
+        expAfterPromoValue := float64(emp.Relatedexp.Int64) / float64(maxRelatedExp) * 10.0
+        emp.Expafterpromo = sql.NullFloat64{Float64: expAfterPromoValue, Valid: true}
     }
     
     // Calculate IndividualPMS score (25%)
-    imps := emp.IndividualPMS
-    if imps > 0 {
-        emp.Indpms25 = imps * 25 / 100
+    if emp.IndividualPMS.Valid {
+        indPmsValue := emp.IndividualPMS.Float64 * 25.0 / 100.0
+        emp.Indpms25 = sql.NullFloat64{Float64: indPmsValue, Valid: true}
+    } else {
+        emp.Indpms25 = sql.NullFloat64{Float64: 0, Valid: true}
     }
     
     // The Tmdrec20 (TMD Rec 20%) will be calculated based on total experience ranking
     // The highest total experience will get the highest score out of 20
     if maxTotalExp > 0 {
-        emp.Tmdrec20 = (float64(emp.Totalexp) / float64(maxTotalExp)) * 20.0
+        tmdrec20Value := float64(emp.Totalexp.Int64) / float64(maxTotalExp) * 20.0
+        emp.Tmdrec20 = sql.NullFloat64{Float64: tmdrec20Value, Valid: true}
+    } else {
+        emp.Tmdrec20 = sql.NullFloat64{Float64: 0, Valid: true}
     }
     
     // District manager recommendation (15%) is input directly
+    if !emp.Disrect15.Valid {
+        emp.Disrect15 = sql.NullFloat64{Float64: 0, Valid: true}
+    }
 
     // Calculate total score
-    emp.Total = float32(emp.Indpms25 + emp.Totalexp20 + emp.Expafterpromo + emp.Tmdrec20 + emp.Disrect15)
+    totalScore := 0.0
+    if emp.Indpms25.Valid {
+        totalScore += emp.Indpms25.Float64
+    }
+    if emp.Totalexp20.Valid {
+        totalScore += emp.Totalexp20.Float64
+    }
+    if emp.Expafterpromo.Valid {
+        totalScore += emp.Expafterpromo.Float64
+    }
+    if emp.Tmdrec20.Valid {
+        totalScore += emp.Tmdrec20.Float64
+    }
+    if emp.Disrect15.Valid {
+        totalScore += emp.Disrect15.Float64
+    }
+    
+    emp.Total = sql.NullFloat64{Float64: totalScore, Valid: true}
 
     // Finally, create the employee
     return empser.repo.CreateEmployee(emp)
@@ -113,16 +145,33 @@ func (empser *DefaultEmployeeService) UpdateEmployeeManagerInputs(id int, indivi
     }
     
     // Update the manager inputs
-    emp.IndividualPMS = individualPMS
-    emp.Disrect15 = districtRec
+    emp.IndividualPMS = sql.NullFloat64{Float64: individualPMS, Valid: true}
+    emp.Disrect15 = sql.NullFloat64{Float64: districtRec, Valid: true}
     
     // Recalculate derived values
     if individualPMS > 0 {
-        emp.Indpms25 = individualPMS * 25 / 100
+        emp.Indpms25 = sql.NullFloat64{Float64: individualPMS * 25 / 100, Valid: true}
     }
     
     // Update the total score
-    emp.Total = float32(emp.Indpms25 + emp.Totalexp20 + emp.Expafterpromo + emp.Tmdrec20 + emp.Disrect15)
+    totalScore := 0.0
+    if emp.Indpms25.Valid {
+        totalScore += emp.Indpms25.Float64
+    }
+    if emp.Totalexp20.Valid {
+        totalScore += emp.Totalexp20.Float64
+    }
+    if emp.Expafterpromo.Valid {
+        totalScore += emp.Expafterpromo.Float64
+    }
+    if emp.Tmdrec20.Valid {
+        totalScore += emp.Tmdrec20.Float64
+    }
+    if emp.Disrect15.Valid {
+        totalScore += emp.Disrect15.Float64
+    }
+    
+    emp.Total = sql.NullFloat64{Float64: totalScore, Valid: true}
     
     // Update the employee in the database
     return empser.repo.UpdateEmployee(emp)
@@ -137,15 +186,32 @@ func (empser *DefaultEmployeeService) UpdateEmployeePMS(id int, individualPMS fl
     }
     
     // Update only the IndividualPMS
-    emp.IndividualPMS = individualPMS
+    emp.IndividualPMS = sql.NullFloat64{Float64: individualPMS, Valid: true}
     
     // Recalculate PMS score (25%)
     if individualPMS > 0 {
-        emp.Indpms25 = individualPMS * 25 / 100
+        emp.Indpms25 = sql.NullFloat64{Float64: individualPMS * 25 / 100, Valid: true}
     }
     
     // Update the total score
-    emp.Total = float32(emp.Indpms25 + emp.Totalexp20 + emp.Expafterpromo + emp.Tmdrec20 + emp.Disrect15)
+    totalScore := 0.0
+    if emp.Indpms25.Valid {
+        totalScore += emp.Indpms25.Float64
+    }
+    if emp.Totalexp20.Valid {
+        totalScore += emp.Totalexp20.Float64
+    }
+    if emp.Expafterpromo.Valid {
+        totalScore += emp.Expafterpromo.Float64
+    }
+    if emp.Tmdrec20.Valid {
+        totalScore += emp.Tmdrec20.Float64
+    }
+    if emp.Disrect15.Valid {
+        totalScore += emp.Disrect15.Float64
+    }
+    
+    emp.Total = sql.NullFloat64{Float64: totalScore, Valid: true}
     
     // Update the employee in the database
     return empser.repo.UpdateEmployee(emp)
@@ -165,10 +231,27 @@ func (empser *DefaultEmployeeService) UpdateEmployeeDistrictRec(id int, district
     }
     
     // Update only the District Recommendation
-    emp.Disrect15 = districtRec
+    emp.Disrect15 = sql.NullFloat64{Float64: districtRec, Valid: true}
     
     // Update the total score
-    emp.Total = float32(emp.Indpms25 + emp.Totalexp20 + emp.Expafterpromo + emp.Tmdrec20 + emp.Disrect15)
+    totalScore := 0.0
+    if emp.Indpms25.Valid {
+        totalScore += emp.Indpms25.Float64
+    }
+    if emp.Totalexp20.Valid {
+        totalScore += emp.Totalexp20.Float64
+    }
+    if emp.Expafterpromo.Valid {
+        totalScore += emp.Expafterpromo.Float64
+    }
+    if emp.Tmdrec20.Valid {
+        totalScore += emp.Tmdrec20.Float64
+    }
+    if emp.Disrect15.Valid {
+        totalScore += emp.Disrect15.Float64
+    }
+    
+    emp.Total = sql.NullFloat64{Float64: totalScore, Valid: true}
     
     // Update the employee in the database
     return empser.repo.UpdateEmployee(emp)

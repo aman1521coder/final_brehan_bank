@@ -32,6 +32,7 @@ type Application struct {
     internalEmployeeService *service.InternalEmployeeService
     externalEmployeeService *service.ExternalEmployeeService
     jobService             *service.JobService
+    applicationLinkService *service.ApplicationLinkService
 }
 
 func main() {
@@ -69,6 +70,7 @@ func main() {
     internalEmployeeService := service.NewInternalEmployeeService(*repo)
     externalEmployeeService := service.NewExternalEmployeeService(*repo)
     jobService := service.NewJobService(repo)
+    applicationLinkService := service.NewApplicationLinkService(repo)
 
     // Initialize handlers
     authHandler := NewAuthHandler(authService)
@@ -85,6 +87,7 @@ func main() {
         internalEmployeeService: internalEmployeeService,
         externalEmployeeService: externalEmployeeService,
         jobService:             jobService,
+        applicationLinkService: applicationLinkService,
     }
 
     // Start server

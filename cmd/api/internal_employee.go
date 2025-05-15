@@ -33,14 +33,26 @@ func (app *Application) handleInternalJobApplication(c *gin.Context) {
 		return
 	}
 
-	// Match with employee record for automatic promotion
-	emp, err := app.internalEmployeeService.MatchWithExistingEmployee(internalApp)
+	// Match with employee record for automatic promotion process
+	matchedEmployee, err := app.internalEmployeeService.MatchWithExistingEmployee(internalApp)
 	if err == nil {
-		// Successfully matched, can trigger promotion process
-		app.log.Printf("Matched internal application from %s %s with employee ID %d", 
-			internalApp.FirstName, internalApp.LastName, emp.ID)
+		// Successfully matched, the evaluation process is initialized automatically
+		app.log.Printf("Matched internal application from %s %s with employee ID %d",
+			internalApp.FirstName, internalApp.LastName, matchedEmployee.ID)
+
+		// Return success with the matched employee information
+		c.JSON(http.StatusCreated, gin.H{
+			"message": "Internal job application submitted and matched with existing employee",
+			"matched_employee": gin.H{
+				"id":     matchedEmployee.ID,
+				"name":   matchedEmployee.FullName,
+				"status": "Evaluation process initiated",
+			},
+		})
+		return
 	}
 
+	// If no match found, just return success
 	c.JSON(http.StatusCreated, gin.H{"message": "Internal job application submitted successfully"})
 }
 
@@ -58,7 +70,11 @@ func (app *Application) getAllInternalApplications(c *gin.Context) {
 // Get internal applications for a specific job
 func (app *Application) getInternalApplicationsByJob(c *gin.Context) {
 	jobID := c.Param("id")
-	
+	if jobID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Job ID is required"})
+		return
+	}
+
 	applications, err := app.internalEmployeeService.GetApplicationsByJobID(jobID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -66,16 +82,15 @@ func (app *Application) getInternalApplicationsByJob(c *gin.Context) {
 	}
 
 	// Match with existing employees for promotion tracking
-	appCtx := app
 	for i, application := range applications {
-		emp, err := appCtx.internalEmployeeService.MatchWithExistingEmployee(application)
+		emp, err := app.internalEmployeeService.MatchWithExistingEmployee(application)
 		if err == nil {
 			applications[i].MatchedEmployee = emp.FullName
 		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"job_id": jobID,
+		"job_id":       jobID,
 		"applications": applications,
 	})
 }

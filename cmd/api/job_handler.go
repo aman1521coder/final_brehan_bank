@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/brehan/bank/cmd/data"
@@ -27,23 +26,23 @@ func (app *Application) createJob(c *gin.Context) {
 
 // Get all job postings
 func (app *Application) getAllJobs(c *gin.Context) {
-	// For now, just return a simple message as this needs repository implementation
-	c.JSON(http.StatusOK, gin.H{"message": "Get all jobs endpoint"})
+	// Use the repository's GetAllJobs function instead of direct SQL
+	jobs, err := app.repo.GetAllJobs()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	
+	c.JSON(http.StatusOK, jobs)
 }
 
 // Get job by ID
 func (app *Application) getJobById(c *gin.Context) {
 	jobID := c.Param("id")
 	
-	// Convert string ID to integer
-	id, err := strconv.Atoi(jobID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid job ID"})
-		return
-	}
-	
+	// No need to convert string ID to integer
 	// Get job details
-	job, err := app.repo.GetJobById(id)
+	job, err := app.repo.GetJobById(jobID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Job not found"})
 		return
@@ -70,13 +69,6 @@ func (app *Application) getJobsByType(c *gin.Context) {
 func (app *Application) updateJob(c *gin.Context) {
 	jobID := c.Param("id")
 	
-	// Convert string ID to integer
-	id, err := strconv.Atoi(jobID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid job ID"})
-		return
-	}
-
 	var job data.Job
 	if err := c.ShouldBindJSON(&job); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -84,17 +76,26 @@ func (app *Application) updateJob(c *gin.Context) {
 	}
 
 	// Ensure ID matches
-	job.ID = id
+	job.ID = jobID
 
-	// TODO: Implement job update in repository
+	// Update the job
+	if err := app.repo.UpdateJob(job); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Job updated successfully"})
 }
 
 // Delete job
 func (app *Application) deleteJob(c *gin.Context) {
-
-	// TODO: Implement job deletion in repository
+	jobID := c.Param("id")
+	
+	// Delete the job
+	if err := app.repo.DeleteJob(jobID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Job deleted successfully"})
 }
@@ -104,10 +105,10 @@ func (app *Application) getApplicationsForJob(c *gin.Context) {
 	jobID := c.Param("id")
 	
 	// Get internal applications
-	internalApps, err1 := app.internalEmployeeService.GetApplicationsByJobID(jobID)
+	internalApps, err1 := app.repo.GetInternalApplicationsByJobID(jobID)
 	
 	// Get external applications
-	externalApps, err2 := app.externalEmployeeService.GetApplicationsByJobID(jobID)
+	externalApps, err2 := app.repo.GetExternalApplicationsByJobID(jobID)
 	
 	if err1 != nil && err2 != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve applications"})
@@ -115,11 +116,14 @@ func (app *Application) getApplicationsForJob(c *gin.Context) {
 	}
 
 	// For internal applications, check if they match existing employees
-	appCtx := app
 	for i, application := range internalApps {
-		emp, err := appCtx.internalEmployeeService.MatchWithExistingEmployee(application)
-		if err == nil {
-			internalApps[i].MatchedEmployee = emp.FullName
+		// Create a full name to search for
+		fullName := application.FirstName + " " + application.LastName
+		
+		// Try to find a matching employee
+		employees, err := app.repo.GetEmployeesByName(fullName)
+		if err == nil && len(employees) > 0 {
+			internalApps[i].MatchedEmployee = employees[0].FullName
 		}
 	}
 

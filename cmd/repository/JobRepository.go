@@ -6,50 +6,50 @@ import (
 
 // Create a new job
 func (repo *Repository) CreateJob(job data.Job) error {
-	query := `INSERT INTO jobs (title, description, requirements, department, location, job_type, salary, posted_date, deadline, status)
+	query := `INSERT INTO jobs (title, description, qualifications, department, location, job_type, salary, created_at, deadline, status)
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 			  RETURNING id`
-	
-	err := repo.DB.QueryRow(query, 
-		job.Title, 
-		job.Description, 
-		job.Requirements,
+
+	err := repo.DB.QueryRow(query,
+		job.Title,
+		job.Description,
+		job.Qualifications,
 		job.Department,
 		job.Location,
 		job.JobType,
 		job.Salary,
-		job.PostedDate,
+		job.CreatedAt,
 		job.Deadline,
 		job.Status).Scan(&job.ID)
-	
+
 	return err
 }
 
 // Get all jobs
 func (repo *Repository) GetAllJobs() ([]data.Job, error) {
-	query := `SELECT id, title, description, requirements, department, location, job_type, salary, posted_date, deadline, status 
+	query := `SELECT id, title, description, qualifications, department, location, job_type, salary, created_at, deadline, status 
 			  FROM jobs 
-			  ORDER BY posted_date DESC`
-	
+			  ORDER BY created_at DESC`
+
 	rows, err := repo.DB.Query(query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	
+
 	var jobs []data.Job
 	for rows.Next() {
 		var job data.Job
 		err := rows.Scan(
-			&job.ID, 
-			&job.Title, 
-			&job.Description, 
-			&job.Requirements,
+			&job.ID,
+			&job.Title,
+			&job.Description,
+			&job.Qualifications,
 			&job.Department,
 			&job.Location,
 			&job.JobType,
 			&job.Salary,
-			&job.PostedDate,
+			&job.CreatedAt,
 			&job.Deadline,
 			&job.Status)
 		if err != nil {
@@ -57,44 +57,44 @@ func (repo *Repository) GetAllJobs() ([]data.Job, error) {
 		}
 		jobs = append(jobs, job)
 	}
-	
+
 	return jobs, nil
 }
 
 // Get job by ID
-func (repo *Repository) GetJobById(id int) (data.Job, error) {
-	query := `SELECT id, title, description, requirements, department, location, job_type, salary, posted_date, deadline, status 
+func (repo *Repository) GetJobById(id string) (data.Job, error) {
+	query := `SELECT id, title, description, qualifications, department, location, job_type, salary, created_at, deadline, status 
 			  FROM jobs 
 			  WHERE id = $1`
-	
+
 	var job data.Job
 	err := repo.DB.QueryRow(query, id).Scan(
-		&job.ID, 
-		&job.Title, 
-		&job.Description, 
-		&job.Requirements,
+		&job.ID,
+		&job.Title,
+		&job.Description,
+		&job.Qualifications,
 		&job.Department,
 		&job.Location,
 		&job.JobType,
 		&job.Salary,
-		&job.PostedDate,
+		&job.CreatedAt,
 		&job.Deadline,
 		&job.Status)
-	
+
 	return job, err
 }
 
 // Update job
 func (repo *Repository) UpdateJob(job data.Job) error {
 	query := `UPDATE jobs 
-			  SET title = $1, description = $2, requirements = $3, department = $4, location = $5, 
+			  SET title = $1, description = $2, qualifications = $3, department = $4, location = $5, 
 			      job_type = $6, salary = $7, deadline = $8, status = $9
 			  WHERE id = $10`
-	
-	_, err := repo.DB.Exec(query, 
-		job.Title, 
-		job.Description, 
-		job.Requirements,
+
+	_, err := repo.DB.Exec(query,
+		job.Title,
+		job.Description,
+		job.Qualifications,
 		job.Department,
 		job.Location,
 		job.JobType,
@@ -102,12 +102,12 @@ func (repo *Repository) UpdateJob(job data.Job) error {
 		job.Deadline,
 		job.Status,
 		job.ID)
-	
+
 	return err
 }
 
 // Delete job
-func (repo *Repository) DeleteJob(id int) error {
+func (repo *Repository) DeleteJob(id string) error {
 	query := `DELETE FROM jobs WHERE id = $1`
 	_, err := repo.DB.Exec(query, id)
 	return err
@@ -118,13 +118,13 @@ func (repo *Repository) GetInternalApplicationsByJobID(jobID string) ([]data.Int
 	query := `SELECT first_name, last_name, other_bank_exp, jobid, resumepath 
 			  FROM internal_applications 
 			  WHERE jobid = $1`
-	
+
 	rows, err := repo.DB.Query(query, jobID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	
+
 	var applications []data.InternalEmployee
 	for rows.Next() {
 		var app data.InternalEmployee
@@ -134,7 +134,7 @@ func (repo *Repository) GetInternalApplicationsByJobID(jobID string) ([]data.Int
 		}
 		applications = append(applications, app)
 	}
-	
+
 	return applications, nil
 }
 
@@ -143,13 +143,13 @@ func (repo *Repository) GetExternalApplicationsByJobID(jobID string) ([]data.Ext
 	query := `SELECT first_name, last_name, email, phone, jobid, other_job_exp, other_job_exp_year, resumepath 
 			  FROM external_applications 
 			  WHERE jobid = $1`
-	
+
 	rows, err := repo.DB.Query(query, jobID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	
+
 	var applications []data.ExternalEmployee
 	for rows.Next() {
 		var app data.ExternalEmployee
@@ -159,57 +159,38 @@ func (repo *Repository) GetExternalApplicationsByJobID(jobID string) ([]data.Ext
 		}
 		applications = append(applications, app)
 	}
-	
+
 	return applications, nil
 }
 
 // Create the jobs table
-func (repo *Repository) CreateJobsTable() error {
-	query := `
-	CREATE TABLE IF NOT EXISTS jobs (
-		id SERIAL PRIMARY KEY,
-		title VARCHAR(100) NOT NULL,
-		description TEXT NOT NULL,
-		requirements TEXT,
-		department VARCHAR(100) NOT NULL,
-		location VARCHAR(100),
-		job_type VARCHAR(50) NOT NULL,
-		salary VARCHAR(50),
-		posted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		deadline TIMESTAMP,
-		status VARCHAR(20) DEFAULT 'open'
-	)`
-	
-	_, err := repo.DB.Exec(query)
-	return err
-}
 
 // Get jobs by type
 func (repo *Repository) GetJobByType(jobType string) ([]data.Job, error) {
-	query := `SELECT id, title, description, requirements, department, location, job_type, salary, posted_date, deadline, status 
+	query := `SELECT id, title, description, qualifications, department, location, job_type, salary, created_at, deadline, status 
 			  FROM jobs 
 			  WHERE job_type = $1
-			  ORDER BY posted_date DESC`
-	
+			  ORDER BY created_at DESC`
+
 	rows, err := repo.DB.Query(query, jobType)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	
+
 	var jobs []data.Job
 	for rows.Next() {
 		var job data.Job
 		err := rows.Scan(
-			&job.ID, 
-			&job.Title, 
-			&job.Description, 
-			&job.Requirements,
+			&job.ID,
+			&job.Title,
+			&job.Description,
+			&job.Qualifications,
 			&job.Department,
 			&job.Location,
 			&job.JobType,
 			&job.Salary,
-			&job.PostedDate,
+			&job.CreatedAt,
 			&job.Deadline,
 			&job.Status)
 		if err != nil {
@@ -217,6 +198,6 @@ func (repo *Repository) GetJobByType(jobType string) ([]data.Job, error) {
 		}
 		jobs = append(jobs, job)
 	}
-	
+
 	return jobs, nil
-} 
+}

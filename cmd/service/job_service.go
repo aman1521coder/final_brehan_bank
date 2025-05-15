@@ -6,8 +6,8 @@ import (
 
 	"github.com/brehan/bank/cmd/data"
 	"github.com/brehan/bank/cmd/repository"
+	"database/sql"
 )
-
 type JobService struct {
 	repo *repository.Repository
 }
@@ -37,11 +37,13 @@ func (s *JobService) CreateJob(job data.Job) error {
 	}
 	
 	// Set default values
-	if job.PostedDate.IsZero() {
-		job.PostedDate = time.Now()
+	if job.CreatedAt.IsZero() {
+		job.CreatedAt = time.Now()
 	}
-	if job.Status == "" {
-		job.Status = "open"
+
+	// Set default status if not valid
+	if !job.Status.Valid {
+		job.Status = sql.NullString{String: "open", Valid: true}
 	}
 	
 	return s.repo.CreateJob(job)
@@ -53,7 +55,7 @@ func (s *JobService) GetAllJobs() ([]data.Job, error) {
 }
 
 // GetJobById returns a specific job by ID
-func (s *JobService) GetJobById(id int) (data.Job, error) {
+func (s *JobService) GetJobById(id string) (data.Job, error) {
 	return s.repo.GetJobById(id)
 }
 
@@ -70,13 +72,13 @@ func (s *JobService) UpdateJob(job data.Job) error {
 	}
 	
 	// Preserve fields that shouldn't be updated
-	job.PostedDate = existingJob.PostedDate
+	job.CreatedAt = existingJob.CreatedAt
 	
 	return s.repo.UpdateJob(job)
 }
 
 // DeleteJob deletes a job posting
-func (s *JobService) DeleteJob(id int) error {
+func (s *JobService) DeleteJob(id string) error {
 	// Check if the job exists
 	_, err := s.GetJobById(id)
 	if err != nil {

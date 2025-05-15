@@ -42,10 +42,34 @@ func (repo *Repository) CreateEmployee(emp data.Employee) error {
 func (repo *Repository)GetAllEmployees()([]data.Employee,error){
     var emps []data.Employee
     query := `SELECT * FROM Employee`
-    err := repo.DB.QueryRow(query).Scan(&emps)
+    rows, err := repo.DB.Query(query)
     if err != nil {
-        return emps, err
+        return nil, err
     }
+    defer rows.Close()
+    
+    for rows.Next() {
+        var emp data.Employee
+        err := rows.Scan(
+            &emp.ID, &emp.FileNumber, &emp.FullName, &emp.Sex, 
+            &emp.EmploymentDate, &emp.IndividualPMS, &emp.LastDoP, 
+            &emp.JobGrade, &emp.NewSalary, &emp.JobCategory, 
+            &emp.CurrentPosition, &emp.Branch, &emp.Department, 
+            &emp.District, &emp.TwinBranch, &emp.Region, 
+            &emp.FieldOfStudy, &emp.EducationalLevel, &emp.Cluster, 
+            &emp.Indpms25, &emp.Totalexp20, &emp.Totalexp, 
+            &emp.Relatedexp, &emp.Expafterpromo, &emp.Tmdrec20, 
+            &emp.Disrect15, &emp.Total)
+        if err != nil {
+            return nil, err
+        }
+        emps = append(emps, emp)
+    }
+    
+    if err = rows.Err(); err != nil {
+        return nil, err
+    }
+    
     return emps, nil
 }
 func (repo *Repository)GetmaxValuesofexp(emp data.Employee)(int,int,int,error){

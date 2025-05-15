@@ -1,19 +1,39 @@
 {
   "name": "frontend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Bank HR System Frontend",
   "main": "index.js",
   "scripts": {
+    "start": "parcel public/index.html --open",
+    "dev": "parcel public/index.html --port 3000 --open",
+    "build": "parcel build public/index.html",
+    "proxy": "node proxy-server.js",
+    "dev-with-proxy": "concurrently \"npm run proxy\" \"npm run dev\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "react",
+    "typescript",
+    "frontend"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/react": "^19.1.4",
-    "@types/react-dom": "^19.1.4",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "typescript": "^5.8.3"
+    "@types/react": "^17.0.39",
+    "@types/react-dom": "^17.0.11",
+    "@types/react-router-dom": "^5.3.3",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-router-dom": "^5.3.4",
+    "typescript": "^4.5.5"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "http-proxy": "^1.18.1",
+    "http-proxy-middleware": "^3.0.5",
+    "parcel-bundler": "^1.12.5",
+    "parcel-proxy-server": "^1.1.0"
   }
 }
