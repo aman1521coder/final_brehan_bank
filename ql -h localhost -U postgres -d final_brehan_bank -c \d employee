@@ -1,0 +1,35 @@
+                                      Table "public.employee"
+      Column       |       Type       | Collation | Nullable |               Default                
+-------------------+------------------+-----------+----------+--------------------------------------
+ id                | integer          |           | not null | nextval('employee_id_seq'::regclass)
+ file_number       | text             |           |          | 
+ full_name         | text             |           |          | 
+ sex               | text             |           |          | 
+ employment_date   | date             |           |          | 
+ individual_pms    | double precision |           |          | 
+ last_dop          | date             |           |          | 
+ job_grade         | text             |           |          | 
+ new_salary        | double precision |           |          | 
+ job_category      | text             |           |          | 
+ new_position      | text             |           |          | 
+ branch            | text             |           |          | 
+ department        | text             |           |          | 
+ district          | text             |           |          | 
+ twin_branch       | text             |           |          | 
+ region            | text             |           |          | 
+ field_of_study    | text             |           |          | 
+ educational_level | text             |           |          | 
+ cluster           | text             |           |          | 
+ indpms25          | double precision |           |          | 0
+ totalexp20        | double precision |           |          | 0
+ totalexp          | integer          |           |          | 0
+ relatedexp        | integer          |           |          | 0
+ expafterpromo     | double precision |           |          | 0
+ tmdrec20          | double precision |           |          | 0
+ disrec20          | double precision |           |          | 0
+ total             | double precision |           |          | 0
+Indexes:
+    "employee_pkey" PRIMARY KEY, btree (id)
+Referenced by:
+    TABLE "internalemployee" CONSTRAINT "internalemployee_employee_id_fkey" FOREIGN KEY (employee_id) REFERENCES employee(id) ON DELETE CASCADE
+

@@ -7,7 +7,7 @@ import (
 // Get all internal applications
 func (repo *Repository) GetAllInternalApplications() ([]data.InternalEmployee, error) {
 	query := `SELECT id, first_name, last_name, other_bank_exp, jobid, resume_path 
-			  FROM InternalEmployee`
+			  FROM internalemployee`
 	
 	rows, err := repo.DB.Query(query)
 	if err != nil {
@@ -32,7 +32,7 @@ func (repo *Repository) GetAllInternalApplications() ([]data.InternalEmployee, e
 // Get all external applications
 func (repo *Repository) GetAllExternalApplications() ([]data.ExternalEmployee, error) {
 	query := `SELECT id, first_name, last_name, email, phone, jobid, other_job_exp, other_job_exp_year, resume_path 
-			  FROM ExternalEmployee`
+			  FROM externalemployee`
 	
 	rows, err := repo.DB.Query(query)
 	if err != nil {
@@ -57,7 +57,7 @@ func (repo *Repository) GetAllExternalApplications() ([]data.ExternalEmployee, e
 
 // Apply for a job (internal employee)
 func (repo *Repository) ApplyInternal(internalApp data.InternalEmployee) error {
-	query := `INSERT INTO InternalEmployee (first_name, last_name, jobid, other_bank_exp, resume_path)
+	query := `INSERT INTO internalemployee (first_name, last_name, jobid, other_bank_exp, resume_path)
 			  VALUES ($1, $2, $3, $4, $5)`
 	
 	_, err := repo.DB.Exec(query, 
@@ -72,7 +72,7 @@ func (repo *Repository) ApplyInternal(internalApp data.InternalEmployee) error {
 
 // Apply for a job (external applicant)
 func (repo *Repository) ApplyExternal(externalApp data.ExternalEmployee) error {
-	query := `INSERT INTO ExternalEmployee (first_name, last_name, email, phone, jobid, other_job_exp, other_job_exp_year, resume_path)
+	query := `INSERT INTO externalemployee (first_name, last_name, email, phone, jobid, other_job_exp, other_job_exp_year, resume_path)
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 	
 	_, err := repo.DB.Exec(query, 

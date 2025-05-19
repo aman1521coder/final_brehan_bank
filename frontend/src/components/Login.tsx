@@ -1,144 +1,188 @@
-import React, { useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
-import { publicAPI } from '../services/api';
+import { authAPI } from '../services/api';
+import '../styles/Login.css';
+
+// District options for district managers
+const districtOptions = [
+  'East District',
+  'East Addis District',
+  'West District',
+  'West Addis District',
+  'North District',
+  'North Addis District',
+  'South District',
+  'South Addis District',
+  'Central Ethiopia District'
+];
 
 const Login: React.FC = () => {
-  const { login, error: authError, loading: authLoading, clearError } = useAuth();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
-  const history = useHistory();
+  const [credentials, setCredentials] = useState({ 
+    name: '', 
+    password: '',
+    role: 'manager', // Default role changed to manager
+    district: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  // Check backend status on component mount
-  useEffect(() => {
-    const checkBackendStatus = async () => {
-      try {
-        await publicAPI.ping();
-        setBackendStatus('online');
-      } catch (err) {
-        console.error('Backend connection check failed:', err);
-        setBackendStatus('offline');
-        setError('Could not connect to the server. Please check if the backend is running.');
-      }
-    };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setCredentials(prev => ({ ...prev, [name]: value }));
     
-    checkBackendStatus();
-  }, []);
-
-  // Update local error state when auth context error changes
-  useEffect(() => {
-    if (authError) {
-      setError(authError);
+    // Clear district if role is not district_manager
+    if (name === 'role' && value !== 'district_manager') {
+      setCredentials(prev => ({ ...prev, district: '' }));
     }
-  }, [authError]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     
-    // Clear previous errors
-    setError(null);
-    clearError();
-    
-    // Don't attempt login if backend is offline
-    if (backendStatus === 'offline') {
-      setError('Cannot log in: Backend server is offline. Please check the server connection.');
-      return;
-    }
-
     try {
-      // Call the login function from auth context
-      await login(username, password);
+      // Only include district if role is district_manager
+      const loginData = {
+        name: credentials.name,
+        password: credentials.password,
+        role: credentials.role,
+        ...(credentials.role === 'district_manager' && { district: credentials.district })
+      };
       
-      // Redirect user based on role (this could come from the auth context)
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
+      // Use the authAPI service instead of direct fetch
+      const authResponse = await authAPI.login(loginData);
+      
+      // Login using the context function
+      if (authResponse && authResponse.token && authResponse.user) {
+        // Log in with the auth context
+        login({
+          user: authResponse.user,
+          token: authResponse.token
+        });
         
-        if (user.role === 'admin') {
-          history.push('/admin/dashboard');
-        } else if (user.role === 'manager') {
-          history.push('/manager/dashboard');
-        } else if (user.role === 'district_manager') {
-          history.push('/district/dashboard');
+        // Redirect based on role
+        if (authResponse.user.role === 'manager') {
+          navigate('/manager/dashboard');
+        } else if (authResponse.user.role === 'district_manager') {
+          navigate('/district/dashboard');
+        } else if (authResponse.user.role === 'admin') {
+          navigate('/admin/dashboard');
         } else {
-          history.push('/dashboard');
+          navigate('/dashboard');
         }
       } else {
-        // Fallback if user data isn't available for some reason
-        history.push('/dashboard');
+        throw new Error('Invalid response from server');
       }
-    } catch (err) {
-      // Error will be handled by auth context and displayed via the authError effect
-      console.error('Login failed:', err);
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2>Login</h2>
+    <div className="login-page">
+      <header className="login-header">
+        <div className="login-logo-container">
+          <div className="login-logo"></div>
+        </div>
+      </header>
+
+      <div className="login-container">
+        <h1 className="login-title">Berhan Bank HR System</h1>
+        <p className="login-subtitle">አንደስማችን ብርሀን ነው ሰራችን!</p>
         
-        {backendStatus === 'offline' && (
-          <div className="warning-message">
-            Backend server is offline. Please check if the server is running.
-          </div>
-        )}
-        
-        {error && (
-          <div className="error-message">
-            {error}
-            <button 
-              className="error-close" 
-              onClick={() => {
-                setError(null);
-                clearError();
-              }}
-            >
-              &times;
+        <div className="login-card">
+          <h2>Login</h2>
+          {error && <div className="error-message">{error}</div>}
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="name">Username</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={credentials.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={credentials.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="role">Role</label>
+              <select
+                id="role"
+                name="role"
+                value={credentials.role}
+                onChange={handleChange}
+                required
+              >
+                <option value="manager">Manager</option>
+                <option value="district_manager">District Manager</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            
+            {credentials.role === 'district_manager' && (
+              <div className="form-group district-selection">
+                <label htmlFor="district">Your District</label>
+                <p className="field-hint">Please select the district you are assigned to manage.</p>
+                <select
+                  id="district"
+                  name="district"
+                  value={credentials.district}
+                  onChange={handleChange}
+                  required
+                  className="district-dropdown"
+                >
+                  <option value="">Select Your District</option>
+                  <optgroup label="Addis Ababa">
+                    <option value="East Addis District">East Addis District</option>
+                    <option value="West Addis District">West Addis District</option>
+                    <option value="North Addis District">North Addis District</option>
+                    <option value="South Addis District">South Addis District</option>
+                  </optgroup>
+                  <optgroup label="Regional">
+                    <option value="East District">East District</option>
+                    <option value="West District">West District</option>
+                    <option value="North District">North District</option>
+                    <option value="South District">South District</option>
+                    <option value="Central Ethiopia District">Central Ethiopia District</option>
+                  </optgroup>
+                </select>
+                {credentials.district && (
+                  <div className="district-preview">
+                    <span className="district-label">Selected District:</span> {credentials.district}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? 'Logging in...' : 'Login'}
             </button>
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              disabled={authLoading || backendStatus === 'offline'}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={authLoading || backendStatus === 'offline'}
-              required
-            />
-          </div>
-          
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
-            disabled={authLoading || backendStatus === 'offline'}
-          >
-            {authLoading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-        
-        <div className="auth-footer">
-          <p>Need help? <a href="/contact">Contact support</a></p>
+          </form>
         </div>
       </div>
+
+      <footer className="login-footer">
+        <p>© {new Date().getFullYear()} Berhan Bank. All rights reserved.</p>
+      </footer>
     </div>
   );
 };

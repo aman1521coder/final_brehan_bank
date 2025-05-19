@@ -50,6 +50,11 @@ func (app *Application) routes() *gin.Engine {
     // Admin can create and fully update employees
     admin.POST("/employees", app.createEmployee)
     admin.PUT("/employees/:id", app.updateEmployee)
+    admin.GET("/employees",app.getAllEmployees)
+    
+    // Admin user management
+    admin.DELETE("/users/:id", app.deleteUser)
+    admin.GET("/users", app.Getallusers)
 
     // Job routes - admin only
     jobs := admin.Group("/jobs")
@@ -70,6 +75,7 @@ func (app *Application) routes() *gin.Engine {
     admin.GET("/applications/external", app.getAllExternalApplications)
     admin.GET("/applications/internal/:id", app.getInternalApplicationsByJob)
     admin.GET("/applications/external/:id", app.getExternalApplicationsByJob)
+	
 
     // Manager routes
     manager := api.Group("/manager")

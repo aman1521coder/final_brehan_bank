@@ -1,0 +1,154 @@
+.application-links-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.page-content {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #e0c675;
+  box-shadow: 0 2px 8px rgba(224, 198, 117, 0.2);
+}
+
+.page-content h2 {
+  color: #003a70;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.message {
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.message.success {
+  background-color: #e7f7ed;
+  color: #1e8541;
+  border: 1px solid #c3e6d1;
+}
+
+.message.error {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+.generate-links-form {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #fffdf5;
+  border-radius: 8px;
+  border: 1px solid #e0c675;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #003a70;
+}
+
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e0c675;
+  border-radius: 4px;
+  font-size: 16px;
+  background-color: #fff;
+}
+
+.generate-btn {
+  background-color: #003a70;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.generate-btn:hover {
+  background-color: #00284d;
+}
+
+.generate-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.links-result {
+  margin-top: 30px;
+  border-top: 1px solid #e0c675;
+  padding-top: 20px;
+}
+
+.links-result h3 {
+  margin-bottom: 20px;
+  color: #003a70;
+}
+
+.link-box {
+  margin-bottom: 25px;
+  border: 1px solid #e0c675;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.link-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f0c419;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0c675;
+}
+
+.link-header h4 {
+  margin: 0;
+  color: #003a70;
+}
+
+.copy-btn {
+  background-color: #003a70;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.copy-btn:hover {
+  background-color: #00284d;
+}
+
+.link-content {
+  padding: 16px;
+  background-color: #fff;
+}
+
+.link-url {
+  background-color: #fffdf5;
+  padding: 12px;
+  border-radius: 4px;
+  font-family: monospace;
+  word-break: break-all;
+  margin-bottom: 10px;
+  border: 1px solid #e0c675;
+}
+
+.link-desc {
+  color: #666;
+  margin: 0;
+} 

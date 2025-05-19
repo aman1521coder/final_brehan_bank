@@ -1,0 +1,85 @@
+.main-header {
+  background-color: #f0c419; /* Golden yellow background */
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 64px;
+  box-sizing: border-box;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 40px;
+  width: 40px;
+  background-color: transparent;
+  background-image: url('../assets/logo.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: transform 0.3s;
+}
+
+.logo:hover {
+  transform: scale(1.1);
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.user-info {
+  color: #003a70; /* Dark blue color for text */
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.user-info span:first-child {
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.user-info span:nth-child(2) {
+  opacity: 0.8;
+  text-transform: capitalize;
+}
+
+.logout-btn {
+  background-color: #003a70; /* Dark blue for button */
+  color: white;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logout-btn:hover {
+  background-color: #00284d;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.app-name {
+  color: #003a70;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-left: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+} 

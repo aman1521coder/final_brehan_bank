@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -31,11 +32,78 @@ func (app *Application) getEmployeeById(c *gin.Context) {
 func (app *Application) getAllEmployees(c *gin.Context) {
 	employees, err := app.employeeService.GetAllEmployees()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		fmt.Printf("Error getting employees: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve employees"})
 		return
 	}
 
-	c.JSON(http.StatusOK, employees)
+	// Convert SQL nullable fields to regular values before sending to frontend
+	var response []gin.H
+	for _, emp := range employees {
+		// Create a map with only the necessary fields, converting nullable fields
+		employeeData := gin.H{
+			"id":               emp.ID,
+			"file_number":      emp.FileNumber,
+			"full_name":        emp.FullName,
+			"sex":              emp.Sex,
+			"job_grade":        emp.JobGrade,
+			"job_category":     emp.JobCategory,
+			"branch":           emp.Branch,
+			"department":       emp.Department,
+			"district":         emp.District,
+			"region":           emp.Region,
+			"educational_level": emp.EducationalLevel,
+			"field_of_study":   emp.FieldOfStudy,
+			"new_position":     emp.CurrentPosition,
+		}
+		
+		// Handle nullable fields with proper type conversion
+		if emp.IndividualPMS.Valid {
+			employeeData["individual_pms"] = emp.IndividualPMS.Float64
+		} else {
+			employeeData["individual_pms"] = 0.0
+		}
+		
+		if emp.Totalexp.Valid {
+			employeeData["totalexp"] = emp.Totalexp.Int64
+		} else {
+			employeeData["totalexp"] = 0
+		}
+		
+		if emp.Indpms25.Valid {
+			employeeData["indpms25"] = emp.Indpms25.Float64
+		} else {
+			employeeData["indpms25"] = 0.0
+		}
+		
+		if emp.Totalexp20.Valid {
+			employeeData["totalexp20"] = emp.Totalexp20.Float64
+		} else {
+			employeeData["totalexp20"] = 0.0
+		}
+		
+		if emp.Tmdrec20.Valid {
+			employeeData["tmdrec20"] = emp.Tmdrec20.Float64
+		} else {
+			employeeData["tmdrec20"] = 0.0
+		}
+		
+		if emp.Disrect15.Valid {
+			employeeData["disrec20"] = emp.Disrect15.Float64
+		} else {
+			employeeData["disrec20"] = 0.0
+		}
+		
+		if emp.Total.Valid {
+			employeeData["total"] = emp.Total.Float64
+		} else {
+			employeeData["total"] = 0.0
+		}
+		
+		response = append(response, employeeData)
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // Create new employee
@@ -248,17 +316,53 @@ func (app *Application) getEmployeeEvaluation(c *gin.Context) {
 		return
 	}
 	
-	// Format the response with just the evaluation fields
+	// Format the response with just the evaluation fields, safely handling nullable fields
 	evaluationDetails := gin.H{
 		"employee_id":        employee.ID,
 		"employee_name":      employee.FullName,
-		"individual_pms":     employee.IndividualPMS,
-		"indpms25":           employee.Indpms25,         // 25% of individual PMS
-		"total_experience":   employee.Totalexp,
-		"totalexp20":         employee.Totalexp20,       // 20% of experience
-		"manager_rec":        employee.Tmdrec20,         // 20% weight
-		"district_rec":       employee.Disrect15,        // 15% weight
-		"total_score":        employee.Total,            // Sum of all weighted scores
+	}
+	
+	// Handle nullable fields
+	if employee.IndividualPMS.Valid {
+		evaluationDetails["individual_pms"] = employee.IndividualPMS.Float64
+	} else {
+		evaluationDetails["individual_pms"] = 0.0
+	}
+	
+	if employee.Indpms25.Valid {
+		evaluationDetails["indpms25"] = employee.Indpms25.Float64
+	} else {
+		evaluationDetails["indpms25"] = 0.0
+	}
+	
+	if employee.Totalexp.Valid {
+		evaluationDetails["total_experience"] = employee.Totalexp.Int64
+	} else {
+		evaluationDetails["total_experience"] = 0
+	}
+	
+	if employee.Totalexp20.Valid {
+		evaluationDetails["totalexp20"] = employee.Totalexp20.Float64
+	} else {
+		evaluationDetails["totalexp20"] = 0.0
+	}
+	
+	if employee.Tmdrec20.Valid {
+		evaluationDetails["manager_rec"] = employee.Tmdrec20.Float64
+	} else {
+		evaluationDetails["manager_rec"] = 0.0
+	}
+	
+	if employee.Disrect15.Valid {
+		evaluationDetails["district_rec"] = employee.Disrect15.Float64
+	} else {
+		evaluationDetails["district_rec"] = 0.0
+	}
+	
+	if employee.Total.Valid {
+		evaluationDetails["total_score"] = employee.Total.Float64
+	} else {
+		evaluationDetails["total_score"] = 0.0
 	}
 	
 	c.JSON(http.StatusOK, evaluationDetails)
@@ -314,4 +418,50 @@ func (app *Application) getEmployeesForDistrictManager(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, employees)
+}
+
+// Get all employees with minimal fields
+func (app *Application) getAllEmployeesSimple(c *gin.Context) {
+	fmt.Println("DEBUG: getAllEmployeesSimple handler called")
+	
+	// Use the full GetAllEmployees method to ensure complete data
+	employees, err := app.repo.GetAllEmployees()
+	if err != nil {
+		fmt.Printf("DEBUG: Error getting employees: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve employees: %v", err)})
+		return
+	}
+
+	// Convert SQL nullable fields to regular values before sending to frontend
+	var response []gin.H
+	for _, emp := range employees {
+		// Create a map with only the necessary fields, converting nullable fields
+		employeeData := gin.H{
+			"id":               emp.ID,
+			"file_number":      emp.FileNumber,
+			"full_name":        emp.FullName,
+			"sex":              emp.Sex,
+			"job_grade":        emp.JobGrade,
+			"district":         emp.District,
+			"new_position":     emp.CurrentPosition,
+		}
+		
+		// Handle nullable fields if any are included in the simple view
+		if emp.IndividualPMS.Valid {
+			employeeData["individual_pms"] = emp.IndividualPMS.Float64
+		} else {
+			employeeData["individual_pms"] = 0.0
+		}
+		
+		if emp.Total.Valid {
+			employeeData["total_score"] = emp.Total.Float64
+		} else {
+			employeeData["total_score"] = 0.0
+		}
+		
+		response = append(response, employeeData)
+	}
+
+	fmt.Printf("DEBUG: Retrieved %d employees for simplified endpoint\n", len(employees))
+	c.JSON(http.StatusOK, response)
 }

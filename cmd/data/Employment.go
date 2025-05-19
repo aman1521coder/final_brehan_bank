@@ -31,6 +31,6 @@ type Employee struct {
 	Relatedexp sql.NullInt64       `json:"relatedexp"`         // Related Exp 
 	Expafterpromo sql.NullFloat64   `json:"expafterpromo"`     // Exp After Promo  for largest 
 	Tmdrec20 sql.NullFloat64   `json:"tmdrec20"`            // TMD Rec 20%
-	Disrect15 sql.NullFloat64   `json:"disrec20"`            // DIS Rec 15%
+	Disrec15 sql.NullFloat64   `json:"disrec15"`            // DIS Rec 15%
 	Total sql.NullFloat64   `json:"total"`                // Total sum of pms25%  and related exp and lastdateofpm
 }

@@ -1,0 +1,170 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #fffdf5; /* Very light cream/gold background */
+}
+
+.login-header {
+  background-color: #f0c419; /* Golden yellow background */
+  padding: 1.5rem 0;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.login-logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-logo {
+  height: 80px;
+  width: 80px;
+  background-color: #f0c419;
+  background-image: url('../assets/logo.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.login-title {
+  color: #003a70; /* Dark blue text */
+  font-size: 2rem;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.login-subtitle {
+  color: #003a70; /* Dark blue text */
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  flex-grow: 1;
+}
+
+.login-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e0c675; /* Light gold border */
+  box-shadow: 0 4px 12px rgba(224, 198, 117, 0.2); /* Light gold shadow */
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-card h2 {
+  color: #003a70; /* Dark blue text */
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #003a70; /* Dark blue text */
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e0c675; /* Light gold border */
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.form-group select {
+  background-color: #fff;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.district-selection {
+  margin-top: 1rem;
+}
+
+.district-dropdown {
+  margin-bottom: 0.5rem;
+}
+
+.district-preview {
+  background-color: #fffdf5; /* Very light cream/gold background */
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  border: 1px solid #e0c675; /* Light gold border */
+}
+
+.district-label {
+  font-weight: 500;
+  color: #003a70; /* Dark blue text */
+}
+
+.btn {
+  display: inline-block;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: pointer;
+  border: 1px solid transparent;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 4px;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-primary {
+  width: 100%;
+  background-color: #003a70; /* Dark blue button */
+  color: #fff;
+  border-color: #003a70;
+}
+
+.btn-primary:hover {
+  background-color: #00284d;
+}
+
+.btn-primary:disabled {
+  background-color: #cccccc;
+  border-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #ffcdd2;
+}
+
+.login-footer {
+  padding: 1rem;
+  text-align: center;
+  background-color: #f0c419; /* Golden yellow background */
+  color: #003a70; /* Dark blue text */
+  margin-top: auto;
+} 

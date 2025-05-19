@@ -102,6 +102,11 @@ func (s *AuthService) GetUserByID(id uuid.UUID) (*data.User, string, string, err
     return user, role, district, nil
 }
 
+// Getallusers retrieves all users with their roles and districts
+func (s *AuthService) Getallusers() ([]map[string]interface{}, error) {
+    return s.repo.GetAllUsers()
+}
+
 type UserService interface {
     ValidateUser(user data.User) error
 }

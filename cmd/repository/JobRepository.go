@@ -115,8 +115,8 @@ func (repo *Repository) DeleteJob(id string) error {
 
 // Get internal applications by job ID
 func (repo *Repository) GetInternalApplicationsByJobID(jobID string) ([]data.InternalEmployee, error) {
-	query := `SELECT first_name, last_name, other_bank_exp, jobid, resumepath 
-			  FROM internal_applications 
+	query := `SELECT first_name, last_name, other_bank_exp, jobid, resume_path 
+			  FROM internalemployee 
 			  WHERE jobid = $1`
 
 	rows, err := repo.DB.Query(query, jobID)
@@ -140,8 +140,8 @@ func (repo *Repository) GetInternalApplicationsByJobID(jobID string) ([]data.Int
 
 // Get external applications by job ID
 func (repo *Repository) GetExternalApplicationsByJobID(jobID string) ([]data.ExternalEmployee, error) {
-	query := `SELECT first_name, last_name, email, phone, jobid, other_job_exp, other_job_exp_year, resumepath 
-			  FROM external_applications 
+	query := `SELECT first_name, last_name, email, phone, jobid, other_job_exp, other_job_exp_year, resume_path 
+			  FROM externalemployee 
 			  WHERE jobid = $1`
 
 	rows, err := repo.DB.Query(query, jobID)

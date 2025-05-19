@@ -33,7 +33,26 @@ func (app *Application) getAllJobs(c *gin.Context) {
 		return
 	}
 	
-	c.JSON(http.StatusOK, jobs)
+	// Convert NullString to regular string before sending to frontend
+	var response []gin.H
+	for _, job := range jobs {
+		jobData := gin.H{
+			"id":            job.ID,
+			"title":         job.Title,
+			"description":   job.Description,
+			"qualifications": job.Qualifications,
+			"department":    job.Department,
+			"location":      job.Location,
+			"job_type":      job.JobType,
+			"salary":        job.Salary,
+			"created_at":    job.CreatedAt,
+			"deadline":      job.Deadline,
+			"status":        job.Status.String, // Convert NullString to string
+		}
+		response = append(response, jobData)
+	}
+	
+	c.JSON(http.StatusOK, response)
 }
 
 // Get job by ID
@@ -48,7 +67,22 @@ func (app *Application) getJobById(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, job)
+	// Convert NullString to regular string
+	jobResponse := gin.H{
+		"id":            job.ID,
+		"title":         job.Title,
+		"description":   job.Description,
+		"qualifications": job.Qualifications,
+		"department":    job.Department,
+		"location":      job.Location,
+		"job_type":      job.JobType,
+		"salary":        job.Salary,
+		"created_at":    job.CreatedAt,
+		"deadline":      job.Deadline,
+		"status":        job.Status.String, // Convert NullString to string
+	}
+
+	c.JSON(http.StatusOK, jobResponse)
 }
 
 // Get job by type (internal/external)
@@ -62,7 +96,26 @@ func (app *Application) getJobsByType(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, jobs)
+	// Convert NullString to regular string before sending to frontend
+	var response []gin.H
+	for _, job := range jobs {
+		jobData := gin.H{
+			"id":            job.ID,
+			"title":         job.Title,
+			"description":   job.Description,
+			"qualifications": job.Qualifications,
+			"department":    job.Department,
+			"location":      job.Location,
+			"job_type":      job.JobType,
+			"salary":        job.Salary,
+			"created_at":    job.CreatedAt,
+			"deadline":      job.Deadline,
+			"status":        job.Status.String, // Convert NullString to string
+		}
+		response = append(response, jobData)
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // Update job

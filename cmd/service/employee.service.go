@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/brehan/bank/cmd/data"
@@ -108,8 +109,8 @@ func (empser *DefaultEmployeeService) CreateEmployee(emp data.Employee) error {
     }
     
     // District manager recommendation (15%) is input directly
-    if !emp.Disrect15.Valid {
-        emp.Disrect15 = sql.NullFloat64{Float64: 0, Valid: true}
+    if !emp.Disrec15.Valid {
+        emp.Disrec15 = sql.NullFloat64{Float64: 0, Valid: true}
     }
 
     // Calculate total score
@@ -126,8 +127,8 @@ func (empser *DefaultEmployeeService) CreateEmployee(emp data.Employee) error {
     if emp.Tmdrec20.Valid {
         totalScore += emp.Tmdrec20.Float64
     }
-    if emp.Disrect15.Valid {
-        totalScore += emp.Disrect15.Float64
+    if emp.Disrec15.Valid {
+        totalScore += emp.Disrec15.Float64
     }
     
     emp.Total = sql.NullFloat64{Float64: totalScore, Valid: true}
@@ -146,7 +147,7 @@ func (empser *DefaultEmployeeService) UpdateEmployeeManagerInputs(id int, indivi
     
     // Update the manager inputs
     emp.IndividualPMS = sql.NullFloat64{Float64: individualPMS, Valid: true}
-    emp.Disrect15 = sql.NullFloat64{Float64: districtRec, Valid: true}
+    emp.Disrec15 = sql.NullFloat64{Float64: districtRec, Valid: true}
     
     // Recalculate derived values
     if individualPMS > 0 {
@@ -167,8 +168,8 @@ func (empser *DefaultEmployeeService) UpdateEmployeeManagerInputs(id int, indivi
     if emp.Tmdrec20.Valid {
         totalScore += emp.Tmdrec20.Float64
     }
-    if emp.Disrect15.Valid {
-        totalScore += emp.Disrect15.Float64
+    if emp.Disrec15.Valid {
+        totalScore += emp.Disrec15.Float64
     }
     
     emp.Total = sql.NullFloat64{Float64: totalScore, Valid: true}
@@ -207,8 +208,8 @@ func (empser *DefaultEmployeeService) UpdateEmployeePMS(id int, individualPMS fl
     if emp.Tmdrec20.Valid {
         totalScore += emp.Tmdrec20.Float64
     }
-    if emp.Disrect15.Valid {
-        totalScore += emp.Disrect15.Float64
+    if emp.Disrec15.Valid {
+        totalScore += emp.Disrec15.Float64
     }
     
     emp.Total = sql.NullFloat64{Float64: totalScore, Valid: true}
@@ -231,7 +232,7 @@ func (empser *DefaultEmployeeService) UpdateEmployeeDistrictRec(id int, district
     }
     
     // Update only the District Recommendation
-    emp.Disrect15 = sql.NullFloat64{Float64: districtRec, Valid: true}
+    emp.Disrec15 = sql.NullFloat64{Float64: districtRec, Valid: true}
     
     // Update the total score
     totalScore := 0.0
@@ -247,8 +248,8 @@ func (empser *DefaultEmployeeService) UpdateEmployeeDistrictRec(id int, district
     if emp.Tmdrec20.Valid {
         totalScore += emp.Tmdrec20.Float64
     }
-    if emp.Disrect15.Valid {
-        totalScore += emp.Disrect15.Float64
+    if emp.Disrec15.Valid {
+        totalScore += emp.Disrec15.Float64
     }
     
     emp.Total = sql.NullFloat64{Float64: totalScore, Valid: true}
@@ -258,7 +259,7 @@ func (empser *DefaultEmployeeService) UpdateEmployeeDistrictRec(id int, district
 }
 
 func (empser *DefaultEmployeeService) GetEmployeeById(id int) (data.Employee, error) {
-    return empser.repo.GetEmployeeById(id)
+    return empser.repo.GetEmployeesByID(id)
 }
 
 
@@ -266,7 +267,40 @@ func (empser *DefaultEmployeeService) GetEmployeeByFileNumber(fileNumber string)
     return empser.repo.GetEmployeeByFileNumber(fileNumber)
 }
 func (empser *DefaultEmployeeService) GetAllEmployees() ([]data.Employee, error) {
-    return empser.repo.GetAllEmployees()
+    employees, err := empser.repo.GetAllEmployees()
+    if err != nil {
+        return nil, fmt.Errorf("failed to get employees from repository: %v", err)
+    }
+    
+    // Ensure all nullable fields have valid values
+    for i := range employees {
+        emp := &employees[i]
+        
+        // Initialize nullable fields if they're not valid
+        if !emp.IndividualPMS.Valid {
+            emp.IndividualPMS = sql.NullFloat64{Float64: 0, Valid: true}
+        }
+        if !emp.Totalexp.Valid {
+            emp.Totalexp = sql.NullInt64{Int64: 0, Valid: true}
+        }
+        if !emp.Indpms25.Valid {
+            emp.Indpms25 = sql.NullFloat64{Float64: 0, Valid: true}
+        }
+        if !emp.Totalexp20.Valid {
+            emp.Totalexp20 = sql.NullFloat64{Float64: 0, Valid: true}
+        }
+        if !emp.Tmdrec20.Valid {
+            emp.Tmdrec20 = sql.NullFloat64{Float64: 0, Valid: true}
+        }
+        if !emp.Disrec15.Valid {
+            emp.Disrec15 = sql.NullFloat64{Float64: 0, Valid: true}
+        }
+        if !emp.Total.Valid {
+            emp.Total = sql.NullFloat64{Float64: 0, Valid: true}
+        }
+    }
+    
+    return employees, nil
 }
 
 // Get limited employee data for district managers

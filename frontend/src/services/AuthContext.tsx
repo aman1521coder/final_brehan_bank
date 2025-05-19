@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authAPI, isAuthenticated, getCurrentUser, logout } from './api';
 
+// Define user interface
 interface User {
   id: string;
   name: string;
@@ -8,38 +8,54 @@ interface User {
   district?: string;
 }
 
+// Define authentication context interface
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   loading: boolean;
   error: string | null;
-  login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string, role: string, district?: string) => Promise<void>;
+  isAuthenticated: boolean;
+  login: (authResponse: { user: User, token: string }) => void;
   logout: () => void;
   clearError: () => void;
 }
 
-// Create the Auth Context
+// Create the context with undefined default value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Auth Provider Component
+// Provider component that wraps the app and makes auth available
 export const AuthProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // Check for existing user session on mount
   useEffect(() => {
+    // Check localStorage for user data
     const checkAuth = async () => {
+      console.log('AuthContext: Checking for existing session');
       try {
-        if (isAuthenticated()) {
-          const userData = getCurrentUser();
-          setUser(userData);
+        const storedToken = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+        console.log('AuthContext: Found user in localStorage:', userStr ? 'yes' : 'no');
+        console.log('AuthContext: Found token in localStorage:', storedToken ? 'yes' : 'no');
+        
+        if (userStr && storedToken) {
+          const parsedUser = JSON.parse(userStr);
+          console.log('AuthContext: Parsed user data:', parsedUser);
+          setUser(parsedUser);
+          setToken(storedToken);
+        } else {
+          console.log('AuthContext: No auth data found in localStorage');
         }
       } catch (err) {
         console.error('Error checking authentication:', err);
         // Clear invalid auth data
-        logout();
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
       } finally {
+        console.log('AuthContext: Setting loading to false');
         setLoading(false);
       }
     };
@@ -47,52 +63,27 @@ export const AuthProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     checkAuth();
   }, []);
 
-  // Login method
-  const handleLogin = async (username: string, password: string) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await authAPI.login({
-        name: username,
-        password: password
-      });
-
-      setUser(response.user);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed. Please check your credentials.');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
+  // Login method - store user data and token
+  const login = (authResponse: { user: User, token: string }) => {
+    console.log('AuthContext: Login called with auth data:', authResponse);
+    setUser(authResponse.user);
+    setToken(authResponse.token);
+    
+    // Store auth data in localStorage
+    localStorage.setItem('user', JSON.stringify(authResponse.user));
+    localStorage.setItem('token', authResponse.token);
+    console.log('AuthContext: Auth data stored in localStorage');
   };
 
-  // Register method
-  const handleRegister = async (username: string, password: string, role: string, district?: string) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await authAPI.register({
-        name: username,
-        password,
-        role,
-        district
-      });
-
-      setUser(response.user);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Logout method
+  // Logout method - clear user data
   const handleLogout = () => {
-    authAPI.logout();
+    console.log('AuthContext: Logout called');
+    // Clear all auth data
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
+    setToken(null);
+    console.log('AuthContext: Auth data cleared');
   };
 
   // Clear error
@@ -101,10 +92,11 @@ export const AuthProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   // Context value
   const value = {
     user,
+    token,
     loading,
     error,
-    login: handleLogin,
-    register: handleRegister,
+    isAuthenticated: !!(user && token),
+    login,
     logout: handleLogout,
     clearError
   };
